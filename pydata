@@ -1,0 +1,49 @@
+#!/usr/bin/python
+
+import mutagen
+import sys
+
+if __name__ == "__main__":
+    if len(sys.argv) % 2:
+        sys.exit("Missing arg.");
+
+    flag = {'-t' : 0, '--title' : 0, '-a' : 1, '--artist' : 1, '-A' : 2, '--album' : 2};
+
+    keys = ['title',
+            'artist',
+            'album',
+            ];
+    
+    supplied_keys = [];
+    supplied_tag = [];
+
+    for i, arg in enumerate(sys.argv[1:-1], 1):
+        if arg in flag and i % 2:
+            supplied_keys.append(keys[flag[arg]]);
+        elif not i % 2:
+            supplied_tag.append(arg);
+        else:
+            sys.exit("Incorrect flag: " + arg);
+
+
+    for key, tag in zip(supplied_keys, supplied_tag):
+        print(key +  ": " + tag);
+
+    prompt = input("Is this ok???\n");
+
+    if prompt not in {'y', 'Y'}:
+        sys.exit("Exiting without writing to file.");
+
+    #song is always the last arg
+    try:
+        song = mutagen.File(sys.argv[-1], easy=True);
+    except Exception as e:
+        sys.exit("mutagen error: " + str(e));
+
+    if not song:
+        sys.exit("mutagen returned None");
+
+    for key, tag in zip(supplied_keys, supplied_tag):
+        song[key] = tag;
+
+    song.save();
